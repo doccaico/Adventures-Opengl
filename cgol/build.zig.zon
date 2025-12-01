@@ -1,0 +1,21 @@
+.{
+    .name = .cgol,
+    .version = "0.0.0",
+    .fingerprint = 0xe32e004f9a7c2fff,
+    .minimum_zig_version = "0.15.2",
+    .dependencies = .{
+        .zopengl = .{
+            .url = "https://github.com/zig-gamedev/zopengl/archive/main.tar.gz",
+            .hash = "zopengl-0.6.0-dev-5-tnz6-mCgD65lY7NrNAU4haXCpVHUpTUEznTwfmBB96",
+        },
+        .zglfw = .{
+            .url = "https://github.com/zig-gamedev/zglfw/archive/main.tar.gz",
+            .hash = "zglfw-0.10.0-dev-zgVDNDm0IQAKv04S9ZmG6PB-dYxO6uWjxIsYIh3oddf4",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
