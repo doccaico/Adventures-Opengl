@@ -1,6 +1,6 @@
 const std = @import("std");
-const zglfw = @import("zglfw");
-const zopengl = @import("zopengl");
+const glfw = @import("zglfw");
+const opengl = @import("zopengl");
 
 const window_title = "minimal";
 const window_width = 600;
@@ -8,43 +8,43 @@ const window_height = 600;
 const opengl_version_major = 4;
 const opengl_version_minor = 6;
 
-fn setWindowCenter(window: *zglfw.Window) !void {
-    if (zglfw.getPrimaryMonitor()) |monitor| {
+fn setWindowCenter(window: *glfw.Window) !void {
+    if (glfw.getPrimaryMonitor()) |monitor| {
         const mode = try monitor.getVideoMode();
         const x = @divTrunc(mode.width, 2) - window_width / 2;
         const y = @divTrunc(mode.height, 2) - window_height / 2;
-        zglfw.setWindowPos(window, x, y);
+        glfw.setWindowPos(window, x, y);
     } else {
         return error.FailedGetPrimaryMonitor;
     }
 }
 
 pub fn main() !void {
-    try zglfw.init();
-    defer zglfw.terminate();
+    try glfw.init();
+    defer glfw.terminate();
 
-    zglfw.windowHint(.client_api, .opengl_api);
-    zglfw.windowHint(.context_version_major, opengl_version_major);
-    zglfw.windowHint(.context_version_minor, opengl_version_minor);
-    zglfw.windowHint(.opengl_profile, .opengl_core_profile);
-    zglfw.windowHint(.opengl_forward_compat, true);
-    zglfw.windowHint(.doublebuffer, true);
-    zglfw.windowHint(.resizable, false);
+    glfw.windowHint(.client_api, .opengl_api);
+    glfw.windowHint(.context_version_major, opengl_version_major);
+    glfw.windowHint(.context_version_minor, opengl_version_minor);
+    glfw.windowHint(.opengl_profile, .opengl_core_profile);
+    glfw.windowHint(.opengl_forward_compat, true);
+    glfw.windowHint(.doublebuffer, true);
+    glfw.windowHint(.resizable, false);
 
-    const window = try zglfw.createWindow(window_width, window_height, window_title, null);
-    defer zglfw.destroyWindow(window);
+    const window = try glfw.createWindow(window_width, window_height, window_title, null);
+    defer glfw.destroyWindow(window);
 
     try setWindowCenter(window);
 
-    zglfw.makeContextCurrent(window);
-    zglfw.swapInterval(1);
+    glfw.makeContextCurrent(window);
+    glfw.swapInterval(1);
 
-    try zopengl.loadCoreProfile(zglfw.getProcAddress, opengl_version_major, opengl_version_minor);
+    try opengl.loadCoreProfile(glfw.getProcAddress, opengl_version_major, opengl_version_minor);
 
-    const gl = zopengl.bindings;
+    const gl = opengl.bindings;
 
     while (!window.shouldClose()) {
-        zglfw.pollEvents();
+        glfw.pollEvents();
 
         // render your things here
 
