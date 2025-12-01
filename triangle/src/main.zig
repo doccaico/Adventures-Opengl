@@ -1,0 +1,138 @@
+const std = @import("std");
+const glfw = @import("zglfw");
+const opengl = @import("zopengl");
+
+const window_title = "triangle";
+const window_width = 600;
+const window_height = 600;
+const opengl_version_major = 4;
+const opengl_version_minor = 6;
+
+fn setWindowCenter(window: *glfw.Window) !void {
+    if (glfw.getPrimaryMonitor()) |monitor| {
+        const mode = try monitor.getVideoMode();
+        const x = @divTrunc(mode.width, 2) - window_width / 2;
+        const y = @divTrunc(mode.height, 2) - window_height / 2;
+        glfw.setWindowPos(window, x, y);
+    } else {
+        return error.FailedGetPrimaryMonitor;
+    }
+}
+
+pub fn main() !void {
+    try glfw.init();
+    defer glfw.terminate();
+
+    glfw.windowHint(.client_api, .opengl_api);
+    glfw.windowHint(.context_version_major, opengl_version_major);
+    glfw.windowHint(.context_version_minor, opengl_version_minor);
+    glfw.windowHint(.opengl_profile, .opengl_core_profile);
+    glfw.windowHint(.opengl_forward_compat, true);
+    glfw.windowHint(.doublebuffer, true);
+    glfw.windowHint(.resizable, false);
+
+    const window = try glfw.createWindow(window_width, window_height, window_title, null);
+    defer glfw.destroyWindow(window);
+
+    try setWindowCenter(window);
+
+    glfw.makeContextCurrent(window);
+    glfw.swapInterval(1);
+
+    try opengl.loadCoreProfile(glfw.getProcAddress, opengl_version_major, opengl_version_minor);
+
+    const gl = opengl.bindings;
+
+    // zig fmt: off
+    const points = [_]f32{
+        0.0,  0.5, 0.0, // x,y,z of first point.
+        0.5, -0.5, 0.0, // x,y,z of second point.
+       -0.5, -0.5, 0.0, // x,y,z of third point.
+    };
+    // zig fmt: on
+
+    var vbo: gl.Uint = undefined;
+    gl.genBuffers(1, &vbo);
+    defer gl.deleteBuffers(1, &vbo);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, points.len * @sizeOf(f32), &points, gl.STATIC_DRAW);
+
+    var vao: gl.Uint = undefined;
+    gl.genVertexArrays(1, &vao);
+    defer gl.deleteVertexArrays(1, &vao);
+    gl.bindVertexArray(vao);
+    gl.enableVertexAttribArray(0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 0, null);
+
+    const vertex_shader =
+        \\#version 460 core
+        \\
+        \\in vec3 vp;
+        \\
+        \\void main() {
+        \\  gl_Position = vec4(vp, 1.0);
+        \\}
+    ;
+
+    const fragment_shader =
+        \\#version 460 core
+        \\
+        \\out vec4 frag_colour;
+        \\
+        \\void main() {
+        \\  frag_colour = vec4(0.5, 0.0, 0.5, 1.0);
+        \\}
+    ;
+
+    const vs = blk: {
+        const vs: gl.Uint = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vs, 1, &[_][*:0]const u8{vertex_shader}, null);
+        gl.compileShader(vs);
+        var success: gl.Int = undefined;
+        gl.getShaderiv(vs, gl.COMPILE_STATUS, &success);
+        if (success == gl.FALSE) return error.FailedVertexCompile;
+        break :blk vs;
+    };
+    defer gl.deleteShader(vs);
+
+    const fs = blk: {
+        const fs: gl.Uint = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fs, 1, &[_][*:0]const u8{fragment_shader}, null);
+        gl.compileShader(fs);
+        var success: gl.Int = undefined;
+        gl.getShaderiv(fs, gl.COMPILE_STATUS, &success);
+        if (success == gl.FALSE) return error.FailedFragmentCompile;
+        break :blk fs;
+    };
+    defer gl.deleteShader(fs);
+
+    const shader_program = blk: {
+        const shader_program: gl.Uint = gl.createProgram();
+        gl.attachShader(shader_program, vs);
+        gl.attachShader(shader_program, fs);
+        gl.linkProgram(shader_program);
+        var success: gl.Int = undefined;
+        gl.getShaderiv(vs, gl.LINK_STATUS, &success);
+        if (success == gl.FALSE) return error.FailedShaderLink;
+        break :blk shader_program;
+    };
+    defer gl.deleteProgram(shader_program);
+
+    gl.useProgram(shader_program);
+
+    while (!glfw.windowShouldClose(window)) {
+        // input
+        glfw.pollEvents();
+        if (glfw.getKey(window, .escape) == .press) {
+            glfw.setWindowShouldClose(window, true);
+        }
+
+        // render
+        gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.2, 0.4, 0.8, 1.0 });
+        // draw points 0-3 from the currently bound VAO with current in-use shader
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+        glfw.swapBuffers(window);
+    }
+}

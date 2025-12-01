@@ -43,13 +43,16 @@ pub fn main() !void {
 
     const gl = opengl.bindings;
 
-    while (!window.shouldClose()) {
+    while (!glfw.windowShouldClose(window)) {
+        // input
         glfw.pollEvents();
+        if (glfw.getKey(window, .escape) == .press) {
+            glfw.setWindowShouldClose(window, true);
+        }
 
         // render your things here
-
         gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.2, 0.4, 0.8, 1.0 });
 
-        window.swapBuffers();
+        glfw.swapBuffers(window);
     }
 }
