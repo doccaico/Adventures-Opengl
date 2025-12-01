@@ -2,7 +2,7 @@ const std = @import("std");
 const glfw = @import("zglfw");
 const opengl = @import("zopengl");
 
-const window_title = "triangle";
+const window_title = "rectangle";
 const window_width = 600;
 const window_height = 600;
 const opengl_version_major = 4;
@@ -44,10 +44,17 @@ pub fn main() !void {
     const gl = opengl.bindings;
 
     // zig fmt: off
-    const points = [_]f32{
-        0.0,  0.5, 0.0, // x,y,z of first point.
-        0.5, -0.5, 0.0, // x,y,z of second point.
-       -0.5, -0.5, 0.0, // x,y,z of third point.
+    // const vertices = [_]f32{
+    //     0.5,  0.5, 0.0,
+    //     0.5, -0.5, 0.0,
+    //    -0.5,  0.5, 0.0,
+    //    -0.5, -0.5, 0.0,
+    // };
+    const vertices = [_]f32{
+        1.0,  1.0, 0.0,
+        1.0, -1.0, 0.0,
+       -1.0,  1.0, 0.0,
+       -1.0, -1.0, 0.0,
     };
     // zig fmt: on
 
@@ -55,7 +62,7 @@ pub fn main() !void {
     gl.genBuffers(1, &vbo);
     defer gl.deleteBuffers(1, &vbo);
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-    gl.bufferData(gl.ARRAY_BUFFER, points.len * @sizeOf(f32), &points, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices.len * @sizeOf(f32), &vertices, gl.STATIC_DRAW);
 
     var vao: gl.Uint = undefined;
     gl.genVertexArrays(1, &vao);
@@ -81,7 +88,7 @@ pub fn main() !void {
         \\out vec4 frag_color;
         \\
         \\void main() {
-        \\  frag_color = vec4(0.5, 0.0, 0.5, 1.0);
+        \\  frag_color = vec4(1.0, 0.5, 0.2, 1.0);
         \\}
     ;
 
@@ -121,6 +128,10 @@ pub fn main() !void {
 
     gl.useProgram(shader_program);
 
+    // *Wireframe mode*
+    // To draw your triangles in wireframe mode, you can configure how OpenGL draws its primitives via gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE). The first argument says we want to apply it to the front and back of all triangles and the second line tells us to draw them as lines. Any subsequent drawing calls will render the triangles in wireframe mode until we set it back to its default using gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL).
+    // gl.polygonMode(gl.FRONT_AND_BACK, gl.LINE);
+
     while (!glfw.windowShouldClose(window)) {
         // input
         glfw.pollEvents();
@@ -130,8 +141,9 @@ pub fn main() !void {
 
         // render
         gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.2, 0.4, 0.8, 1.0 });
-        // draw points 0-3 from the currently bound VAO with current in-use shader
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        // left bottom
+        gl.viewport(0, 0, window_width / 2, window_height / 2);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
         glfw.swapBuffers(window);
     }
