@@ -10,7 +10,7 @@ const window_height = 600;
 const opengl_version_major = 4;
 const opengl_version_minor = 6;
 
-const max_fps = 15.0;
+const max_fps = 30.0;
 const frame_time = 1.0 / max_fps;
 
 const cell_size = 3;
@@ -33,8 +33,8 @@ fn initBoard() !void {
     });
     const rand = prng.random();
 
-    var y: usize = 1;
     var x: usize = 1;
+    var y: usize = 1;
     while (y < board_height + 1) : (y += 1) {
         while (x < live_cells + 1) : (x += 1) {
             board[y][x] = .alive;
@@ -45,8 +45,8 @@ fn initBoard() !void {
 }
 
 fn renderBoard() void {
-    var y: usize = 1;
     var x: usize = 1;
+    var y: usize = 1;
     while (y < board_height + 1) : (y += 1) {
         while (x < board_width + 1) : (x += 1) {
             if (board[y][x] == .alive) {
@@ -67,11 +67,11 @@ fn renderBoard() void {
 fn updateBoard() void {
     var neighbors: [board_height + 2][board_width + 2]u8 = undefined;
 
-    var y: usize = 1;
     var x: usize = 1;
+    var y: usize = 1;
     while (y < board_height + 1) : (y += 1) {
         while (x < board_width + 1) : (x += 1) {
-            neighbors[y][x] = countNeighbors(y, x);
+            neighbors[y][x] = countNeighbors(x, y);
         }
         x = 1;
     }
@@ -90,25 +90,7 @@ fn updateBoard() void {
     }
 }
 
-inline fn countNeighbors(y: u64, x: u64) u8 {
-    const a = (@intFromEnum(board[y - 1][x - 1]) +
-        // top-middle
-        @intFromEnum(board[y - 1][x]) +
-        // top-right
-        @intFromEnum(board[y - 1][x + 1]) +
-        // left
-        @intFromEnum(board[y][x - 1]) +
-        // right
-        @intFromEnum(board[y][x + 1]) +
-        // bottom-left
-        @intFromEnum(board[y + 1][x - 1]) +
-        // bottom-middle
-        @intFromEnum(board[y + 1][x]) +
-        // bottom-right
-        @intFromEnum(board[y + 1][x + 1]));
-
-    _ = a;
-    // std.debug.print("{any}\n", .{a});
+inline fn countNeighbors(x: u64, y: u64) u8 {
     // zig fmt: off
     return (
         // top-left
@@ -163,15 +145,7 @@ pub fn main() !void {
 
     try zopengl.loadCoreProfile(glfw.getProcAddress, opengl_version_major, opengl_version_minor);
 
-    // const gl = opengl.bindings;
-
     // zig fmt: off
-    // const vertices = [_]f32{
-    //     0.5,  0.5, 0.0,
-    //     0.5, -0.5, 0.0,
-    //    -0.5,  0.5, 0.0,
-    //    -0.5, -0.5, 0.0,
-    // };
     const vertices = [_]f32{
         1.0,  1.0, 0.0,
         1.0, -1.0, 0.0,
@@ -210,7 +184,7 @@ pub fn main() !void {
         \\out vec4 frag_color;
         \\
         \\void main() {
-        \\  frag_color = vec4(1.0, 0.5, 0.2, 1.0);
+        \\  frag_color = vec4(0.2, 0.8, 0.0, 1.0);
         \\}
     ;
 
@@ -269,21 +243,16 @@ pub fn main() !void {
         }
 
         if (accumulated_time >= frame_time) {
-            // const update_dt = current_time - last_update_time;
             last_update_time = current_time;
             accumulated_time = 0.0;
 
             // update
             updateBoard();
-            // update(update_dt);
-            // std.debug.print("{any}\n", .{update_dt});
 
             // render
-            gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.2, 0.4, 0.8, 1.0 });
-            // left bottom
+            gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 1.0 });
             renderBoard();
 
-            // std.debug.print("{any}\n", .{last_update_time});
             glfw.swapBuffers(window);
         }
     }

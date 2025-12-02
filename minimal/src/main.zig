@@ -1,6 +1,7 @@
 const std = @import("std");
 const glfw = @import("zglfw");
-const opengl = @import("zopengl");
+const zopengl = @import("zopengl");
+const gl = zopengl.bindings;
 
 const window_title = "minimal";
 const window_width = 600;
@@ -39,9 +40,7 @@ pub fn main() !void {
     glfw.makeContextCurrent(window);
     glfw.swapInterval(1);
 
-    try opengl.loadCoreProfile(glfw.getProcAddress, opengl_version_major, opengl_version_minor);
-
-    const gl = opengl.bindings;
+    try zopengl.loadCoreProfile(glfw.getProcAddress, opengl_version_major, opengl_version_minor);
 
     while (!glfw.windowShouldClose(window)) {
         // input
