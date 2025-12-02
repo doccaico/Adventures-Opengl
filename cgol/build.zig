@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
@@ -42,6 +43,7 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{
             .target = target,
             .optimize = optimize,
+            .link_libc = true,
         }),
     });
     frametimer.installHeadersDirectory(b.path("vendor"), ".", .{});
@@ -52,9 +54,12 @@ pub fn build(b: *std.Build) void {
             \\#include "frametimer.h"
         ),
     });
-    frametimer.linkLibC();
     exe.linkLibrary(frametimer);
-    exe.linkSystemLibrary("winmm"); // for frametimer
+    if (builtin.os.tag == .windows) {
+        exe.linkSystemLibrary("winmm"); // for frametimer
+    } else {
+        @compileError("Unsupported OS.");
+    }
 
     b.installArtifact(exe);
 
