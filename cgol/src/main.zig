@@ -3,14 +3,16 @@ const glfw = @import("zglfw");
 const zopengl = @import("zopengl");
 const gl = zopengl.bindings;
 
+const c = @cImport({
+    @cInclude("frametimer.h");
+});
+
 const window_title = "cgol";
 const window_width = 600;
 const window_height = 600;
 const opengl_version_major = 4;
 const opengl_version_minor = 6;
-
-const max_fps = 30.0;
-const frame_time = 1.0 / max_fps;
+const max_fps = 15;
 
 const cell_size = 3;
 const board_width = window_width / cell_size;
@@ -225,34 +227,23 @@ pub fn main() !void {
 
     try initBoard();
 
-    var last_time = glfw.getTime();
-    var last_update_time = last_time;
-    var accumulated_time: f64 = 0.0;
+    const frametimer: ?*c.frametimer_t = c.frametimer_create(null);
+    defer c.frametimer_destroy(frametimer);
+    c.frametimer_lock_rate(frametimer, max_fps);
 
     while (!glfw.windowShouldClose(window)) {
-        const current_time = glfw.getTime();
-        const dt = current_time - last_time;
-        last_time = current_time;
-        accumulated_time += dt;
+        _ = c.frametimer_update(frametimer);
 
-        // input
         glfw.pollEvents();
         if (glfw.getKey(window, .escape) == .press) {
             glfw.setWindowShouldClose(window, true);
         }
 
-        if (accumulated_time >= frame_time) {
-            last_update_time = current_time;
-            accumulated_time = 0.0;
+        updateBoard();
 
-            // update
-            updateBoard();
+        gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 1.0 });
+        renderBoard();
 
-            // render
-            gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0.0, 0.0, 0.0, 1.0 });
-            renderBoard();
-
-            glfw.swapBuffers(window);
-        }
+        glfw.swapBuffers(window);
     }
 }

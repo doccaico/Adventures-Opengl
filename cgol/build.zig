@@ -36,6 +36,26 @@ pub fn build(b: *std.Build) void {
     const zopengl_module = zopengl.module("root");
     exe.root_module.addImport("zopengl", zopengl_module);
 
+    // frametimer
+    const frametimer = b.addLibrary(.{
+        .name = "frametimer",
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    frametimer.installHeadersDirectory(b.path("vendor"), ".", .{});
+    frametimer.addIncludePath(b.path("vendor"));
+    frametimer.addCSourceFile(.{
+        .file = b.addWriteFiles().add("frametimer.c",
+            \\#define FRAMETIMER_IMPLEMENTATION
+            \\#include "frametimer.h"
+        ),
+    });
+    frametimer.linkLibC();
+    exe.linkLibrary(frametimer);
+    exe.linkSystemLibrary("winmm"); // for frametimer
+
     b.installArtifact(exe);
 
     const run_step = b.step("run", "Run the app");

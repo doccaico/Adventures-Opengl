@@ -7,3 +7,4 @@ Tested only on Windows 11.
 ### Using libraries
 - [zglfw](https://github.com/zig-gamedev/zglfw)
 - [zopengl](https://github.com/zig-gamedev/zopengl)
+- [frametimer.h](https://github.com/mattiasgustavsson/libs)
