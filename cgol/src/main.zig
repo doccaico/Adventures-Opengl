@@ -1,4 +1,3 @@
-const builtin = @import("builtin");
 const std = @import("std");
 const glfw = @import("zglfw");
 const zopengl = @import("zopengl");
