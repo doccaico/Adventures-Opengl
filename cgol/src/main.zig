@@ -1,6 +1,8 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const glfw = @import("zglfw");
-const opengl = @import("zopengl");
+const zopengl = @import("zopengl");
+const gl = zopengl.bindings;
 
 const window_title = "cgol";
 const window_width = 600;
@@ -8,7 +10,7 @@ const window_height = 600;
 const opengl_version_major = 4;
 const opengl_version_minor = 6;
 
-const max_fps = 30.0;
+const max_fps = 15.0;
 const frame_time = 1.0 / max_fps;
 
 const cell_size = 3;
@@ -19,7 +21,7 @@ comptime {
     std.debug.assert(window_width / board_width == window_height / board_height);
 }
 
-const Cell = enum { alive, dead };
+const Cell = enum(u8) { dead = 0, alive = 1 };
 
 var board: [board_height + 2][board_width + 2]Cell = .{.{.dead} ** (board_width + 2)} ** (board_height + 2);
 
@@ -43,8 +45,6 @@ fn initBoard() !void {
 }
 
 fn renderBoard() void {
-    const gl = opengl.bindings;
-
     var y: usize = 1;
     var x: usize = 1;
     while (y < board_height + 1) : (y += 1) {
@@ -62,6 +62,72 @@ fn renderBoard() void {
         }
         x = 1;
     }
+}
+
+fn updateBoard() void {
+    var neighbors: [board_height + 2][board_width + 2]u8 = undefined;
+
+    var y: usize = 1;
+    var x: usize = 1;
+    while (y < board_height + 1) : (y += 1) {
+        while (x < board_width + 1) : (x += 1) {
+            neighbors[y][x] = countNeighbors(y, x);
+        }
+        x = 1;
+    }
+
+    y = 1;
+    x = 1;
+    while (y < board_height + 1) : (y += 1) {
+        while (x < board_width + 1) : (x += 1) {
+            switch (neighbors[y][x]) {
+                2 => {},
+                3 => board[y][x] = .alive,
+                else => board[y][x] = .dead,
+            }
+        }
+        x = 1;
+    }
+}
+
+inline fn countNeighbors(y: u64, x: u64) u8 {
+    const a = (@intFromEnum(board[y - 1][x - 1]) +
+        // top-middle
+        @intFromEnum(board[y - 1][x]) +
+        // top-right
+        @intFromEnum(board[y - 1][x + 1]) +
+        // left
+        @intFromEnum(board[y][x - 1]) +
+        // right
+        @intFromEnum(board[y][x + 1]) +
+        // bottom-left
+        @intFromEnum(board[y + 1][x - 1]) +
+        // bottom-middle
+        @intFromEnum(board[y + 1][x]) +
+        // bottom-right
+        @intFromEnum(board[y + 1][x + 1]));
+
+    _ = a;
+    // std.debug.print("{any}\n", .{a});
+    // zig fmt: off
+    return (
+        // top-left
+        @intFromEnum(board[y - 1][x - 1]) +
+        // top-middle
+        @intFromEnum(board[y - 1][x]) +
+        // top-right
+        @intFromEnum(board[y - 1][x + 1]) +
+        // left
+        @intFromEnum(board[y][x - 1]) +
+        // right
+        @intFromEnum(board[y][x + 1]) +
+        // bottom-left
+        @intFromEnum(board[y + 1][x - 1]) +
+        // bottom-middle
+        @intFromEnum(board[y + 1][x]) +
+        // bottom-right
+        @intFromEnum(board[y + 1][x + 1]));
+    // zig fmt: on
 }
 
 fn setWindowCenter(window: *glfw.Window) !void {
@@ -95,9 +161,9 @@ pub fn main() !void {
     glfw.makeContextCurrent(window);
     glfw.swapInterval(1);
 
-    try opengl.loadCoreProfile(glfw.getProcAddress, opengl_version_major, opengl_version_minor);
+    try zopengl.loadCoreProfile(glfw.getProcAddress, opengl_version_major, opengl_version_minor);
 
-    const gl = opengl.bindings;
+    // const gl = opengl.bindings;
 
     // zig fmt: off
     // const vertices = [_]f32{
@@ -208,6 +274,7 @@ pub fn main() !void {
             accumulated_time = 0.0;
 
             // update
+            updateBoard();
             // update(update_dt);
             // std.debug.print("{any}\n", .{update_dt});
 
